@@ -13,6 +13,20 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 .scr{position:absolute;inset:0;display:none;flex-direction:column;padding:1.2em 1.6em;background:rgba(5,14,24,.99);z-index:20;overflow-y:auto}
 .scr.on{display:flex}
 .in{width:100%;max-width:34em;margin:0 auto;display:flex;flex-direction:column;min-height:100%}
+.c1,.c2{display:contents}
+#stage.land .scr{padding:.6em 1.2em}
+#stage.land .in{max-width:64em;display:grid;grid-template-columns:1fr 1fr;gap:0 1.2em;align-content:start;min-height:0}
+#stage.land .in>.hd{grid-column:1/3}
+#stage.land .c1,#stage.land .c2{display:block}
+#stage.land h1{font-size:1.8em}#stage.land .sub{font-size:.95em;line-height:1.35}#stage.land .card b{font-size:1.15em}#stage.land .card span{font-size:.95em}#stage.land .box{padding:.5em .8em}
+#stage.land .btn{font-size:1.25em;padding:.5em}
+#stage.land #sTitle .in{align-content:center}
+#stage.land #sTitle .in>.tl{grid-column:1}
+#stage.land #sTitle .in>.tb{grid-column:1}
+#stage.land #sTitle .in>.tr{grid-column:2;grid-row:1/3;align-self:center}
+#stage.land #sBranch .in>*{grid-column:auto}
+#stage.land #sBranch .in>.hd{grid-column:1/3}
+#stage.land #sPause .in{max-width:26em;display:flex}
 h1{font-size:2.6em;font-weight:900;text-align:center;line-height:1.15}
 h2{font-size:1.5em;font-weight:900}
 .sub{color:var(--sub);font-size:1.15em;line-height:1.5}
@@ -90,17 +104,17 @@ h2{font-size:1.5em;font-weight:900}
   </div>
 
   <div class="scr on" id="sTitle"><div class="in" style="justify-content:space-between">
-    <div style="margin-top:1.2em">
+    <div class="tl" style="margin-top:1.2em">
       <div class="sub" style="text-align:center;letter-spacing:.3em;color:#38bdf8;font-weight:800">BAMJIGI STUDIO · 검증 프로토 v0.2</div>
       <h1 style="margin-top:.3em;text-shadow:0 0 .6em #38bdf8">포롱이<br>연못 수호</h1>
       <p class="sub" style="text-align:center;margin-top:.8em">오른쪽 벌레 둥지에서 몰려오는 군단을<br>동료를 소환해 막아내는 횡스크롤 디펜스</p>
     </div>
-    <div class="box">
+    <div class="box tb">
       <h3>조작</h3>
       <p class="sub" style="color:#e2e8f0">아래 카드를 눌러 동료 소환 (💧 이슬이 시간이 지나며 차올라요)<br>영웅 스킬(⛈️📣)과 💰이슬 주머니도 💧로 써요<br>전장을 탭: 그 자리로 혀 타격 + 직선 충격파 (꾹 누르면 느린 자동 반복)<br>◀ ▶ : 포롱이 이동 (PC는 A/D·방향키, 카드는 1~7키)<br>3번째 명중은 강타! · 적에게 맞으면 3초 기절 · 연못이 0이 되면 패배</p>
       <p class="sub" style="margin-top:.4em">💡 가로로 돌리면 전장이 더 넓게 보여요.</p>
     </div>
-    <div>
+    <div class="tr">
       <button class="btn pri" id="bStart">게임 시작</button>
       <button class="btn sm" id="bDiff">난이도: 보통</button>
       <div class="row">
@@ -823,9 +837,9 @@ function openInter(){
 }
 function renderInter(){
   const ctx=interCtx,el=$('sInter');
-  let h='<div class="in"><div class="row" style="align-items:center"><div><h2>웨이브 '+(S.wi+1)+' 클리어!</h2><div class="sub">누수 '+S.ws.leaks+' · 🌱 +'+S.lastBonus+(S.lastNoLeak?' (무누수 보너스)':'')+'</div></div>'
-   +'<div style="text-align:right;flex:0 0 auto"><b style="color:var(--gold);font-size:1.5em">🌱 '+Math.floor(S.seed)+'</b><div class="sub">연못 '+Math.round(S.pond.hp)+'/'+S.pond.max+(S.pond.shield>0?' (+'+Math.round(S.pond.shield)+')':'')+'</div></div></div>';
-  h+='<div class="box">'+nextPreview()+'</div>';
+  let h='<div class="in"><div class="hd"><div class="row" style="align-items:center"><div><h2>웨이브 '+(S.wi+1)+' 클리어!</h2><div class="sub">누수 '+S.ws.leaks+' · 🌱 +'+S.lastBonus+(S.lastNoLeak?' (무누수 보너스)':'')+'</div></div>'
+   +'<div style="text-align:right;flex:0 0 auto"><b style="color:var(--gold);font-size:1.5em">🌱 '+Math.floor(S.seed)+'</b><div class="sub">연못 '+Math.round(S.pond.hp)+'/'+S.pond.max+(S.pond.shield>0?' (+'+Math.round(S.pond.shield)+')':'')+'</div></div></div></div>';
+  h+='<div class="c1"><div class="box">'+nextPreview()+'</div>';
   if(ctx.relicChoices){
     h+='<div class="box" style="border-color:#f59e0b"><h3>🏆 유물 획득! 2택 1</h3>';
     ctx.relicChoices.forEach((r,i)=>{h+='<button class="card'+(ctx.relic!=null?(ctx.relic===i?' sel':' dim'):'')+'" style="--c:#f59e0b" data-relic="'+i+'" '+(ctx.relic!=null?'disabled':'')+'><b>'+r.n+'</b><span>'+r.d+'</span></button>'});
@@ -834,13 +848,13 @@ function renderInter(){
   h+='<div class="box"><h3>연못 성장 카드 (1장 선택)</h3>';
   ctx.cards.forEach((c,i)=>{h+='<button class="card'+(ctx.picked!=null?(ctx.picked===i?' sel':' dim'):'')+'" style="--c:'+c.col+'" data-card="'+i+'" '+(ctx.picked!=null?'disabled':'')+'><b>'+c.n+'</b> <small style="color:'+c.col+'">'+c.cat+'</small><span>'+c.d+'</span></button>'});
   if(ctx.picked==null){const rc=5+3*ctx.reroll;h+='<button class="btn sm" data-reroll="1" '+(S.seed<rc?'disabled':'')+'>🔄 카드 다시 뽑기 (🌱'+rc+')</button>'}
-  h+='</div>';
-  h+='<div class="box"><h3>연못 시설 (🌱로 구매)</h3><div class="wrap">';
+  h+='</div></div>';
+  h+='<div class="c2"><div class="box"><h3>연못 시설 (🌱로 구매)</h3><div class="wrap">';
   FAC.forEach(f=>{const lv=facL(f.id);const full=lv>=f.max;const c=f.cost(Math.min(lv,f.max-1));
     h+='<button class="chip" data-fac="'+f.id+'" '+((full||S.seed<c)?'disabled':'')+'><b>'+f.n+(f.id==='lotus'?' ×'+lv:' Lv'+lv+'/'+f.max)+'</b><span class="sub" style="font-size:.9em;display:block">'+f.d+'</span>'+(full?'MAX':'🌱'+c)+'</button>'});
   h+='</div></div>';
   const needPick=ctx.picked==null||(ctx.relicChoices&&ctx.relic==null);
-  h+='<div style="flex:1"></div><button class="btn pri" id="bNext" '+(needPick?'disabled':'')+'>'+(S.wi+1>=WAVES.length-1?'보스 웨이브로!':'다음 웨이브 출발')+'</button></div>';
+  h+='<div style="flex:1"></div><button class="btn pri" id="bNext" '+(needPick?'disabled':'')+'>'+(S.wi+1>=WAVES.length-1?'보스 웨이브로!':'다음 웨이브 출발')+'</button></div></div>';
   el.innerHTML=h;
   el.querySelectorAll('[data-card]').forEach(b=>b.onclick=()=>{
     const c=ctx.cards[+b.dataset.card];c.ap();ctx.picked=+b.dataset.card;
@@ -860,7 +874,7 @@ function renderInter(){
 function openBranch(){
   const el=$('sBranch');
   const nw=S.wi+1;
-  el.innerHTML='<div class="in" style="justify-content:center"><h2 style="text-align:center">갈림길</h2><p class="sub" style="text-align:center;margin:.4em 0">다음 웨이브 전에 길을 골라요</p>'
+  el.innerHTML='<div class="in" style="justify-content:center"><div class="hd"><h2 style="text-align:center">갈림길</h2><p class="sub" style="text-align:center;margin:.4em 0">다음 웨이브 전에 길을 골라요</p></div>'
     +'<button class="card" style="--c:#f43f5e" data-br="elite"><b>⚔️ 엘리트 도전</b><span>다음 웨이브(W'+(nw+1)+')에 엘리트 벌레가 섞여 와요. 처치하면 <b>유물 2택 1</b>!</span></button>'
     +'<button class="card" style="--c:#4ade80" data-br="rest"><b>🪷 연못 휴식</b><span>연못 체력 +40% 회복, 🌱 +15. 안전하게 가요.</span></button></div>';
   show('sBranch');
@@ -920,14 +934,13 @@ function toast(s){const t=$('toast');t.textContent=s;t.style.display='block';cle
 function updCopyLabel(){$('bCopyAll').textContent='플레이 로그 복사 (저장 '+runs.length+'판)'}
 function renderResult(){
   const r=S.result,st=S.st,acc=st.taps?Math.round(st.hits/st.taps*100):0;
-  let h='<div class="in"><h1 style="margin-top:.6em;color:'+(r==='win'?'#4ade80':'#fb7185')+'">'+(r==='win'?'연못 수호 성공!':r==='lose'?'연못이 무너졌어요':'포기')+'</h1>';
-  h+='<p class="sub" style="text-align:center">'+(r==='win'?'모든 웨이브 클리어':'웨이브 '+(S.wi+1)+(r==='lose'?'에서 막지 못했어요':'에서 포기'))+' · '+mmss(S.gt)+'</p>';
-  h+='<div class="box"><div class="sub" style="color:#e2e8f0">탭 '+st.taps+' · 명중률 '+acc+'% · 강타 '+st.strong+' · 최대 콤보 '+st.maxCombo+'<br>소환 '+Object.values(st.summons).reduce((a,b)=>a+b,0)+'회 · 동료 쓰러짐 '+st.allyDeaths+' · 기절 '+st.stuns+'회<br>누수 '+st.leaks+' · 처치 '+st.kills+' · 동료스킬 '+Object.values(st.skills).reduce((a,b)=>a+b,0)+'회</div></div>';
-  h+='<div class="box"><h3>플레이 소감 (1 별로 ~ 5 최고)</h3>';
+  let h='<div class="in"><div class="hd"><h1 style="margin-top:.6em;color:'+(r==='win'?'#4ade80':'#fb7185')+'">'+(r==='win'?'연못 수호 성공!':r==='lose'?'연못이 무너졌어요':'포기')+'</h1>';
+  h+='<p class="sub" style="text-align:center">'+(r==='win'?'모든 웨이브 클리어':'웨이브 '+(S.wi+1)+(r==='lose'?'에서 막지 못했어요':'에서 포기'))+' · '+mmss(S.gt)+'</p></div>';
+  h+='<div class="c1"><div class="box"><div class="sub" style="color:#e2e8f0">탭 '+st.taps+' · 명중률 '+acc+'% · 강타 '+st.strong+' · 최대 콤보 '+st.maxCombo+'<br>소환 '+Object.values(st.summons).reduce((a,b)=>a+b,0)+'회 · 동료 쓰러짐 '+st.allyDeaths+' · 기절 '+st.stuns+'회<br>누수 '+st.leaks+' · 처치 '+st.kills+' · 동료스킬 '+Object.values(st.skills).reduce((a,b)=>a+b,0)+'회</div></div></div>';
+  h+='<div class="c2"><div class="box"><h3>플레이 소감 (1 별로 ~ 5 최고)</h3>';
   [['a','첫 30초, 탭 타격이 맛있었나요?'],['b','한 판 더 하고 싶은가요?'],['c','웨이브 사이 선택이 고민됐나요?'],['d','동료 소환·자동 전투가 재미있었나요?'],['e','횡스크롤 디펜스답게 느껴졌나요? (축구장 느낌 없음)'],['f','화면 크기·시야·조작이 편했나요?']].forEach(([k,q])=>{
     h+='<div class="srv"><div class="q">'+q+'</div>'+[1,2,3,4,5].map(n=>'<button data-sv="'+k+n+'" class="'+(S.survey[k]===n?'on':'')+'">'+n+'</button>').join('')+'</div>'});
-  h+='</div>';
-  h+='<button class="btn pri" id="bAgain">한 판 더!</button><button class="btn sm" id="bCopyRun">이번 판 로그 복사</button><button class="btn sm" id="bToTitle">타이틀로</button></div>';
+  h+='</div><button class="btn pri" id="bAgain">한 판 더!</button><button class="btn sm" id="bCopyRun">이번 판 로그 복사</button><button class="btn sm" id="bToTitle">타이틀로</button></div></div>';
   $('sResult').innerHTML=h;show('sResult');
   $('sResult').querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{const k=b.dataset.sv[0],n=+b.dataset.sv.slice(1);S.survey[k]=n;S.runObj.survey=S.survey;saveRuns();renderResult()});
   $('bAgain').onclick=()=>startRun();
@@ -960,7 +973,7 @@ function resize(){
     panel.classList.add('land');panel.style.top='auto';panel.style.height=panelH+'px';
   }
   L.offX=Math.max(0,(vw-L.viewW*L.s)/2);
-  stage.style.fontSize=L.u+'px';
+  stage.style.fontSize=(L.portrait?L.u:Math.max(11,Math.min(vh/22,15)))+'px';stage.classList.toggle('land',!L.portrait);
 }
 function screenToWorld(sx,sy){return {x:camX+(sx-layout.offX)/layout.s,y:(sy-layout.bfTop)/layout.s+VY0}}
 addEventListener('resize',resize);
