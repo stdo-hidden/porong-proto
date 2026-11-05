@@ -157,6 +157,19 @@
 
   /* ===== 폼 진화 프로토 ===== */
   @media (max-width: 560px) {
+    .slot-box { width: 30px; height: 30px; font-size: 14px; border-radius: 6px; }
+    .slot-box[style*="opacity:0.25"] { display: none; }
+    .hud-slots span { font-size: 7px !important; }
+    #hud { padding: 8px; }
+    .banner-txt { font-size: 20px; letter-spacing: 1px; }
+    .phase-banner { width: 92%; }
+    .warn-title { font-size: 26px; } .warn-sub { font-size: 12px; }
+    .boss-bar-wrap { top: 64px; width: 88%; }
+    .form-panel { top: 82px; font-size: 10px; padding: 5px 8px; }
+    .fp-name { font-size: 12px; }
+    .modal { padding: 16px; }
+    .modal h2 { font-size: 17px; padding: 0 26px; }
+
     .hud-ctrls { flex-direction: column; gap: 4px; }
     .hud-ctrls .icon-btn { font-size: 10px; padding: 4px 7px; white-space: nowrap; }
     .phase-center { min-width: 0; flex: 1; padding: 6px 8px; }
@@ -252,6 +265,7 @@
         <button class="btn btn-sub" id="sanc-btn">연못 성지 (10대 강화)</button>
         <button class="btn btn-sub" id="pol-btn">오염도 계약 (<span id="cur-pol">0</span>)</button>
       </div>
+      <button class="btn btn-sub" id="diff-btn">난이도: 보통</button>
       <button class="btn btn-sub" id="hide-unknown-btn">미발견 폼 "???" 표시: OFF</button>
     </div>
   </div>
@@ -479,11 +493,11 @@ const UPGRADE_DEFS = [
 ];
 
 const PHASES = [
-  { id: 0, name: "아침 안개", color: "#0a1912", banner: "PHASE 1: 아침 안개", boss: { id: "boss_strider", name: "소금쟁이 선봉장", hp: 7500, r: 34, spd: 2.0, col: '#38bdf8', icon: '🦗' } },
-  { id: 1, name: "한낮의 급류", color: "#061f2d", banner: "PHASE 2: 한낮의 급류", boss: { id: "boss_beetle", name: "장수풍뎅이 타이탄", hp: 17000, r: 40, spd: 1.8, col: '#f59e0b', icon: '🪲' } },
-  { id: 2, name: "황혼의 맹독", color: "#1f0924", banner: "PHASE 3: 황혼의 맹독", boss: { id: "boss_toad", name: "맹독 두꺼비왕", hp: 32000, r: 44, spd: 1.7, col: '#a855f7', icon: '🐸' } },
-  { id: 3, name: "야간 폭풍우", color: "#051121", banner: "PHASE 4: 야간 폭풍우", boss: { id: "boss_bee", name: "뇌우 여왕벌", hp: 55000, r: 36, spd: 2.3, col: '#facc15', icon: '🐝' } },
-  { id: 4, name: "칠흑의 연꽃", color: "#240608", banner: "FINAL PHASE: 칠흑의 연꽃", boss: { id: "boss_mantis", name: "사마귀 타이탄", hp: 95000, r: 46, spd: 2.1, col: '#f43f5e', icon: '⚔️' } }
+  { id: 0, name: "아침 안개", color: "#0a1912", banner: "PHASE 1: 아침 안개", boss: { id: "boss_strider", name: "소금쟁이 선봉장", hp: 3000, r: 34, spd: 2.0, col: '#38bdf8', icon: '🦗' } },
+  { id: 1, name: "한낮의 급류", color: "#061f2d", banner: "PHASE 2: 한낮의 급류", boss: { id: "boss_beetle", name: "장수풍뎅이 타이탄", hp: 6800, r: 40, spd: 1.8, col: '#f59e0b', icon: '🪲' } },
+  { id: 2, name: "황혼의 맹독", color: "#1f0924", banner: "PHASE 3: 황혼의 맹독", boss: { id: "boss_toad", name: "맹독 두꺼비왕", hp: 12800, r: 44, spd: 1.7, col: '#a855f7', icon: '🐸' } },
+  { id: 3, name: "야간 폭풍우", color: "#051121", banner: "PHASE 4: 야간 폭풍우", boss: { id: "boss_bee", name: "뇌우 여왕벌", hp: 22000, r: 36, spd: 2.3, col: '#facc15', icon: '🐝' } },
+  { id: 4, name: "칠흑의 연꽃", color: "#240608", banner: "FINAL PHASE: 칠흑의 연꽃", boss: { id: "boss_mantis", name: "사마귀 타이탄", hp: 38000, r: 46, spd: 2.1, col: '#f43f5e', icon: '⚔️' } }
 ];
 
 /* ==========================================================================
@@ -1437,7 +1451,7 @@ function update() {
   if (!isBossBattle && !bossChestDropped) {
     const mythicCount = P.weapons.filter(w => w.isMythic).length;
     // 5페이즈 기준 기본 5프레임마다 1마리 스폰 (신화 스킬 보유 시 3~4프레임으로 화면 전체 포위)
-    const baseSpawnRate = Math.max(5, (save.pollution.density ? 14 : 20) - (curPhase * 3.5) - (mythicCount * 1.5));
+    const baseSpawnRate = Math.max(5, (save.pollution.density ? 16 : 24) - (curPhase * 3.5) - (mythicCount * 1.5)) / DIFF().spawn;
     if (frame % Math.floor(baseSpawnRate) === 0) {
       const a = Math.random() * 6.28;
       const dist = Math.hypot(VW, VH) / 2 + 50;
@@ -1446,7 +1460,7 @@ function update() {
         y: P.y + Math.sin(a) * dist,
         vx: 0, vy: 0,
         r: 15,
-        hp: 30 + totalSec * 1.1 + Math.pow(totalSec / 120, 2),
+        hp: (30 + totalSec * 0.8 + Math.pow(totalSec / 120, 2)) * DIFF().hp,
         spd: (save.pollution.speed ? 2.6 : 2.0) + curPhase * 0.16,
         hitStun: 0, flashWhite: 0, pulse: Math.random() * 6.28,
         status: { concussion: 0, drenched: 0, shock: 0, corrosion: 0, ignition: 0, frostbite: 0, frozen: 0 }
@@ -1668,7 +1682,7 @@ function takePlayerDmg(rawDmg) {
   }
 
   const finalDmg = Math.max(3, rawDmg - getStat('arm'));
-  if (!P.god) P.hp -= finalDmg * P.takenMul;
+  if (!P.god) P.hp -= finalDmg * P.takenMul * DIFF().dmg;
   P.iframes = 30; shakeT = 8;
 
   if (hasBossRelic('br_20')) {
@@ -2078,7 +2092,7 @@ function startBossTime() {
   const bData = PHASES[curPhase].boss;
   curBoss = {
     id: bData.id,
-    name: bData.name, hp: bData.hp, maxHp: bData.hp,
+    name: bData.name, hp: bData.hp * DIFF().hp, maxHp: bData.hp * DIFF().hp,
     r: bData.r, spd: bData.spd, col: bData.col, icon: bData.icon,
     x: P.x, y: P.y - 250,
     dead: false, flashWhite: 0,
@@ -2773,8 +2787,8 @@ document.getElementById('start-btn').onclick = () => {
    - 모든 수치는 CFG 에 모아 두었다 (검증 중 밸런스 조정용).
    ========================================================================== */
 const CFG = {
-  eliteTimes: [40, 60, 60, 60, 60],   // 페이즈 경과 초에 엘리트 1체 출현 (페이즈 1~5)
-  foodLifeElite: 600, foodLifeBoss: 900, foodPickR: 34, // 먹이 지속(프레임, 60fps 기준 10초/15초)
+  eliteTimes: [30, 50, 50, 50, 50],   // 페이즈 경과 초에 엘리트 1체 출현 (페이즈 1~5)
+  foodLifeElite: 840, foodLifeBoss: 1080, foodPickR: 34, // 먹이 지속(프레임, 60fps 기준 14초/18초)
   auxSlots: 2,                         // 보조 능력 칸 (D3)
   maxElemLv: 3,
   monoMul: 1.3, extremeMul: 2.1,       // 1차 폼 위력 보정 / 극(極) 폼 추가 보정 (D1)
@@ -2904,7 +2918,7 @@ function spawnFoodCluster(x, y, kind) {
 }
 function spawnElite() {
   if (isBossBattle) return;
-  const a = Math.random() * 6.28, dist = Math.hypot(VW, VH) / 2 + 60, hp = (30 + totalSec * 1.1) * 14;
+  const a = Math.random() * 6.28, dist = Math.hypot(VW, VH) / 2 + 60, hp = (30 + totalSec * 0.8) * 9 * DIFF().hp;
   enemies.push({ x: P.x + Math.cos(a) * dist, y: P.y + Math.sin(a) * dist, vx: 0, vy: 0, r: 26, hp, maxHp: hp, spd: 1.5 + curPhase * 0.1,
     hitStun: 0, flashWhite: 0, pulse: 0, elite: true, status: { concussion: 0, drenched: 0, shock: 0, corrosion: 0, ignition: 0, frostbite: 0, frozen: 0 } });
   showBanner('👑 엘리트 출현!', '처치하면 먹이를 떨어뜨립니다');
@@ -2953,7 +2967,7 @@ function addExp(n) {
     P.lvl++;
     P.nextExp = Math.floor(P.nextExp * 1.15 + 4);
     // 레벨업은 선택 없이 자동 스탯 상승 + 연출 (성장감 공백 방지)
-    P.maxHp += 4; P.hp = Math.min(P.maxHp, P.hp + 10); P.lvDmg *= 1.015;
+    P.maxHp += 6; P.hp = Math.min(P.maxHp, P.hp + 12); P.lvDmg *= 1.03;
     fxRings.push({ x: P.x, y: P.y, r: 10, max: 54, life: 16, col: '#38bdf8' });
     floatTexts.push({ x: P.x, y: P.y - 34, t: `LEVEL UP! Lv.${P.lvl}`, c: '#7dd3fc', size: 18, life: 44 });
   }
@@ -3299,6 +3313,12 @@ function renderRunReport(cleared) {
 
 /* ---------- 로비/디버그 버튼 ---------- */
 const dbg = { god: false };
+const DIFFS = [{ n: '쉬움', hp: 0.7, spawn: 0.75, dmg: 0.7 }, { n: '보통', hp: 1, spawn: 1, dmg: 1 }, { n: '어려움', hp: 1.3, spawn: 1.25, dmg: 1.3 }];
+function DIFF() { return DIFFS[save.diff === undefined ? 1 : save.diff] || DIFFS[1]; }
+function setDifficulty(i) { save.diff = ((i % 3) + 3) % 3; writeSave(); refreshDiffBtn(); }
+function refreshDiffBtn() { document.getElementById('diff-btn').innerText = `난이도: ${DIFF().n} (눌러서 변경)`; }
+document.getElementById('diff-btn').onclick = () => setDifficulty((save.diff === undefined ? 1 : save.diff) + 1);
+refreshDiffBtn();
 function refreshHideBtn() { document.getElementById('hide-unknown-btn').innerText = `미발견 폼 "???" 표시: ${save.hideUnknown ? 'ON' : 'OFF'}`; }
 document.getElementById('hide-unknown-btn').onclick = () => { save.hideUnknown = !save.hideUnknown; writeSave(); refreshHideBtn(); };
 refreshHideBtn();
