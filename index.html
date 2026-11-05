@@ -661,8 +661,14 @@ document.getElementById('audio-toggle-btn').onclick = () => {
    ========================================================================== */
 const cvs = document.getElementById('game');
 const ctx = cvs.getContext('2d');
-let W = cvs.width = window.innerWidth, H = cvs.height = window.innerHeight;
-window.addEventListener('resize', () => { W = cvs.width = window.innerWidth; H = cvs.height = window.innerHeight; initBackgroundProps(); });
+let W = 0, H = 0, ZOOM = 1, VW = 0, VH = 0;  // VW/VH: 줌 적용 후 월드에서 보이는 크기
+function fitView() {
+  W = cvs.width = window.innerWidth; H = cvs.height = window.innerHeight;
+  ZOOM = Math.max(0.5, Math.min(1, W / 720));  // 좁은 화면(모바일 세로)은 더 멀리서 보이게 축소 (약 720px 폭 시야)
+  VW = W / ZOOM; VH = H / ZOOM;
+}
+fitView();
+window.addEventListener('resize', () => { fitView(); initBackgroundProps(); });
 
 let isRun = false, isPause = false;
 let totalSec = 0, phaseSec = 120, curPhase = 0, frame = 0;
@@ -1434,7 +1440,7 @@ function update() {
     const baseSpawnRate = Math.max(5, (save.pollution.density ? 14 : 20) - (curPhase * 3.5) - (mythicCount * 1.5));
     if (frame % Math.floor(baseSpawnRate) === 0) {
       const a = Math.random() * 6.28;
-      const dist = Math.hypot(W, H) / 2 + 50;
+      const dist = Math.hypot(VW, VH) / 2 + 50;
       enemies.push({
         x: P.x + Math.cos(a) * dist,
         y: P.y + Math.sin(a) * dist,
@@ -1642,8 +1648,8 @@ function update() {
     if (--floatTexts[i].life <= 0) floatTexts.splice(i, 1);
   }
 
-  camX = P.x - W / 2 + (shakeT > 0 ? (Math.random()-0.5)*shakeT-- : 0);
-  camY = P.y - H / 2 + (shakeT > 0 ? (Math.random()-0.5)*shakeT : 0);
+  camX = P.x - VW / 2 + (shakeT > 0 ? (Math.random()-0.5)*shakeT-- : 0);
+  camY = P.y - VH / 2 + (shakeT > 0 ? (Math.random()-0.5)*shakeT : 0);
 
   // HUD 갱신
   document.getElementById('hp-bar').style.width = Math.max(0, (P.hp / P.maxHp) * 100) + '%';
@@ -1761,14 +1767,15 @@ function drawBossCharacter(b) {
 function draw() {
   ctx.clearRect(0, 0, W, H);
   ctx.save();
+  ctx.scale(ZOOM, ZOOM);
   ctx.translate(-camX, -camY);
 
   ctx.fillStyle = PHASES[curPhase].color;
-  ctx.fillRect(camX, camY, W, H);
+  ctx.fillRect(camX, camY, VW, VH);
 
   // 연못 배경 오브젝트
   for (let prop of pondProps) {
-    if (prop.x > camX - 60 && prop.x < camX + W + 60 && prop.y > camY - 60 && prop.y < camY + H + 60) {
+    if (prop.x > camX - 60 && prop.x < camX + VW + 60 && prop.y > camY - 60 && prop.y < camY + VH + 60) {
       ctx.save();
       ctx.translate(prop.x, prop.y);
       ctx.rotate(prop.ang);
@@ -2030,7 +2037,7 @@ function draw() {
   if (mythicFlashAlpha > 0) {
     ctx.fillStyle = mythicFlashCol;
     ctx.globalAlpha = mythicFlashAlpha;
-    ctx.fillRect(camX, camY, W, H);
+    ctx.fillRect(camX, camY, VW, VH);
     ctx.globalAlpha = 1;
   }
 
@@ -2897,7 +2904,7 @@ function spawnFoodCluster(x, y, kind) {
 }
 function spawnElite() {
   if (isBossBattle) return;
-  const a = Math.random() * 6.28, dist = Math.hypot(W, H) / 2 + 60, hp = (30 + totalSec * 1.1) * 14;
+  const a = Math.random() * 6.28, dist = Math.hypot(VW, VH) / 2 + 60, hp = (30 + totalSec * 1.1) * 14;
   enemies.push({ x: P.x + Math.cos(a) * dist, y: P.y + Math.sin(a) * dist, vx: 0, vy: 0, r: 26, hp, maxHp: hp, spd: 1.5 + curPhase * 0.1,
     hitStun: 0, flashWhite: 0, pulse: 0, elite: true, status: { concussion: 0, drenched: 0, shock: 0, corrosion: 0, ignition: 0, frostbite: 0, frozen: 0 } });
   showBanner('👑 엘리트 출현!', '처치하면 먹이를 떨어뜨립니다');
@@ -3165,8 +3172,8 @@ function drawFoods() {
     ctx.restore();
     // 화면 밖이면 가장자리 화살표
     const m = 34;
-    if (f.x < camX + m || f.x > camX + W - m || f.y < camY + m + 70 || f.y > camY + H - m) {
-      const ax = Math.max(camX + m, Math.min(camX + W - m, f.x)), ay = Math.max(camY + m + 70, Math.min(camY + H - m, f.y));
+    if (f.x < camX + m || f.x > camX + VW - m || f.y < camY + m + 70 || f.y > camY + VH - m) {
+      const ax = Math.max(camX + m, Math.min(camX + VW - m, f.x)), ay = Math.max(camY + m + 70, Math.min(camY + VH - m, f.y));
       const ang = Math.atan2(f.y - ay, f.x - ax);
       ctx.save(); ctx.translate(ax, ay); ctx.rotate(ang);
       ctx.fillStyle = col; ctx.globalAlpha = 0.75 + Math.sin(f.pulse * 1.5) * 0.25;
