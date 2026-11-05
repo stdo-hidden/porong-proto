@@ -52,7 +52,8 @@ h2{font-size:1.5em;font-weight:900}
 #dewRow .bar{flex:1;height:.9em;border-radius:99px;background:#07121b;border:1px solid var(--bd);overflow:hidden}
 #dewRow .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#38bdf8,#7dd3fc)}
 #tip{font-size:.85em;color:var(--sub);font-weight:600;text-align:right;flex:1.6}
-#deck{grid-area:deck;display:flex;gap:.45em}
+#deck{grid-area:deck;display:flex;flex-wrap:wrap;gap:.45em}
+.dk.u{flex:1 1 22%}.dk.h{flex:1 1 30%;height:5em}
 .dk{position:relative;flex:1;min-width:0;border-radius:.7em;border:2px solid var(--c,#38bdf8);background:#112a40;color:#fff;padding:.35em .2em;text-align:center;overflow:hidden;font-size:1em;height:6em}
 .dk b{display:block;font-size:1.05em;font-weight:900;white-space:nowrap}
 .dk small{display:block;font-size:.95em;color:#bae6fd;font-weight:800;margin-top:.1em}
@@ -71,7 +72,7 @@ h2{font-size:1.5em;font-weight:900}
 #panel.land #info{display:none}
 #panel.land #dewRow{font-size:.95em}
 #panel.land .mv{width:4.6em;height:100%;align-self:stretch;font-size:1.5em}
-#panel.land .dk{height:auto}
+#panel.land #deck{flex-wrap:nowrap}#panel.land .dk,#panel.land .dk.h{height:auto;flex:1 1 0}#panel.land .dk .ico{font-size:1.2em}#panel.land .dk em{font-size:.7em}
 #toast{position:absolute;left:50%;top:24%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:.6em 1.2em;border-radius:99px;font-size:1.3em;font-weight:800;z-index:60;white-space:nowrap;display:none}
 </style>
 </head>
@@ -96,7 +97,7 @@ h2{font-size:1.5em;font-weight:900}
     </div>
     <div class="box">
       <h3>조작</h3>
-      <p class="sub" style="color:#e2e8f0">아래 카드를 눌러 동료 소환 (💧 이슬이 시간이 지나며 차올라요)<br>전장을 탭: 그 자리로 혀 타격 (꾹 누르면 느린 자동 반복)<br>◀ ▶ : 포롱이 이동 (PC는 A/D·방향키, 카드는 1~4키)<br>3번째 명중은 강타! · 적에게 맞으면 3초 기절 · 연못이 0이 되면 패배</p>
+      <p class="sub" style="color:#e2e8f0">아래 카드를 눌러 동료 소환 (💧 이슬이 시간이 지나며 차올라요)<br>영웅 스킬(⛈️📣)과 💰이슬 주머니도 💧로 써요<br>전장을 탭: 그 자리로 혀 타격 + 직선 충격파 (꾹 누르면 느린 자동 반복)<br>◀ ▶ : 포롱이 이동 (PC는 A/D·방향키, 카드는 1~7키)<br>3번째 명중은 강타! · 적에게 맞으면 3초 기절 · 연못이 0이 되면 패배</p>
       <p class="sub" style="margin-top:.4em">💡 가로로 돌리면 전장이 더 넓게 보여요.</p>
     </div>
     <div>
@@ -224,8 +225,8 @@ function vib(ms){if(opt.vib&&navigator.vibrate)try{navigator.vibrate(ms)}catch(e
 function newRun(startWave){
   S={
     wi:startWave,t:0,gt:0,
-    pond:{hp:100,max:100,shield:0},dew:60,seed:0,income:6,dewCap:120,startDew:60,
-    dmgLvl:0,radMul:1,rangeMul:1,cdMul:1,pierce:false,chain:0,elem:{},strongEvery:3,echo:false,echoN:0,
+    pond:{hp:100,max:100,shield:0},dew:60,seed:0,income:4.5,dewCap:120,startDew:60,
+    dmgLvl:0,waveMul:1,twin:false,hero:{storm:1,cheer:0},skCd:{storm:0,cheer:0},cheerT:0,wallet:0,radMul:1,rangeMul:1,cdMul:1,pierce:false,chain:0,elem:{},strongEvery:3,echo:false,echoN:0,
     dewMul:1,waveHeal:0,pondDmgMul:1,skillCd:1,
     cap:{front:4,range:3,support:1,trap:2},sumCd:{front:0,range:0,support:0,trap:0},
     owned:{front:1,range:1,support:0,trap:0},fac:{},relics:[],
@@ -250,7 +251,7 @@ const hitR=()=>24*S.radMul*(1+.08*facL('lantern'));
 const tRange=()=>155*S.rangeMul;
 const tCd=()=>.35*S.cdMul;
 const tDmg=()=>9*(1+.25*S.dmgLvl)*(allies.some(a=>a.role==='support'&&a.hp>0)?1.12:1);
-const compDmgMul=()=>1+.12*facL('lantern');
+const compDmgMul=()=>(1+.12*facL('lantern'))*(S.cheerT>0?1.3:1);
 const cnt=r=>allies.filter(a=>a.role===r&&a.hp>0).length;
 
 /* ================= 동료 소환 ================= */
@@ -270,6 +271,38 @@ function summon(role){
   return true;
 }
 let flashDew=0;
+const HSK={storm:{n:'연잎 폭풍',ico:'⛈️',cost:50,cd:18,col:'#facc15'},cheer:{n:'개굴 함성',ico:'📣',cost:40,cd:25,col:'#f472b6'}};
+function heroSkill(k){
+  if(scene!=='battle'||S.over||paused||!S.hero[k]||S.skCd[k]>0||P.stun>0)return false;
+  const H=HSK[k];
+  if(S.dew<H.cost){S.st.noDewFails++;flashDew=.4;beep(120,.08,'square',.04);return false}
+  S.dew-=H.cost;S.skCd[k]=H.cd;S.st.hskills=(S.st.hskills||0)+1;
+  const lv=S.hero[k];
+  if(k==='storm'){
+    const L=layout,x0=camX,x1=camX+L.viewW;
+    const t=enemies.filter(e=>!e.dead&&e.x>=x0-10&&e.x<=x1+10);
+    t.forEach(e=>{dmgE(e,40*(1+.4*(lv-1)),'skill',{ign:true});e.stun=Math.max(e.stun,e.big?.3:.8);
+      bolts.push({x1:e.x+rnd(-8,8),y1:VY0,x2:e.x,y2:ey(e),t:0,col:'#fde047'});rings.push({x:e.x,y:ey(e),r0:4,r1:26,t:0,life:.25,col:'#fde047'})});
+    shake=Math.max(shake,7);slowT=.12;beep(140,.3,'sawtooth',.08,-60);vib(40);
+    floatText(P.x,gy(P.d)-40,'연잎 폭풍! ×'+t.length,'#fde047',16);
+    ev('영웅 스킬: 연잎 폭풍 (적 '+t.length+')');
+  }else{
+    S.cheerT=6+2*lv;
+    allies.forEach(a=>{if(a.hp>0){a.hp=Math.min(a.max,a.hp+a.max*(.2+.05*lv));rings.push({x:a.x,y:gy(a.d)-8,r0:6,r1:30,t:0,life:.3,col:'#f472b6'})}});
+    beep(520,.2,'triangle',.07,300);floatText(P.x,gy(P.d)-40,'개굴 함성!','#f472b6',16);ev('영웅 스킬: 개굴 함성');
+  }
+  return true;
+}
+const walletCost=()=>40+35*S.wallet;
+function upWallet(){
+  if(scene!=='battle'||S.over||paused)return false;
+  if(S.wallet>=5)return false;
+  const c=walletCost();
+  if(S.dew<c){S.st.noDewFails++;flashDew=.4;beep(120,.08,'square',.04);return false}
+  S.dew-=c;S.wallet++;S.income*=1.25;S.dewCap+=30;S.st.walletUps=(S.st.walletUps||0)+1;
+  floatText(P.x,gy(P.d)-40,'이슬 주머니 UP!','#7dd3fc',14);beep(700,.12,'triangle',.06,300);ev('이슬 주머니 Lv'+S.wallet);
+  return true;
+}
 
 /* ================= 웨이브 ================= */
 function startWave(i){
@@ -304,7 +337,7 @@ function startWave(i){
 }
 function mkEnemy(type,x,o={}){
   const d=ET[type],M=S.muts;
-  const sc=1+.13*S.wi;
+  const sc=1+.17*S.wi;
   let hp=d.hp*(type==='boss'||type==='mini'?1:sc)*(type==='boss'||type==='elite'?1:Math.sqrt(DIFFS[opt.diff].m)),sp=d.sp,armor=d.armor||0;
   if(type==='boss')hp=d.hp*(1+.04*Object.values(S.owned).reduce((a,b)=>a+b,0));
   if(M.includes('swarm')&&type!=='boss'&&type!=='elite')hp*=.6;
@@ -415,7 +448,10 @@ function launchWave(tx,ty,base,strong){
   let dx=tx-mx,dy=ty-my;const d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;
   if(Math.abs(dx)<.25)dx=.25*(P.face||1);
   const n=Math.hypot(dx,dy);dx/=n;dy/=n;
-  waves.push({x:mx,y:my,vx:dx*(strong?560:480),vy:dy*(strong?560:480),r:strong?30:22,dmg:base*(strong?.8:.55),t:0,life:strong?.8:.65,hit:new Set(),strong});
+  const sp=(strong?560:480)*(1+(S.waveMul-1)*.5);
+  const mk=(ax,ay)=>waves.push({x:mx,y:my,vx:ax*sp,vy:ay*sp,r:(strong?30:22)*S.waveMul,dmg:base*(strong?.8:.55),t:0,life:strong?.8:.65,hit:new Set(),strong});
+  mk(dx,dy);
+  if(S.twin){const a=.22,ca=Math.cos(a),sa=Math.sin(a);mk(dx*ca-dy*sa,dx*sa+dy*ca);mk(dx*ca+dy*sa,-dx*sa+dy*ca)}
 }
 function updWaves(dt){
   for(let i=waves.length-1;i>=0;i--){
@@ -486,7 +522,7 @@ function skill(a){
 }
 function updAlly(a,dt){
   const R=ROLES[a.role],c=cm(a),dm=compDmgMul();
-  a.t+=dt;a.pop=Math.max(0,a.pop-dt*3);a.flash-=dt;a.atkT-=dt;a.lunge=Math.max(0,a.lunge-dt);
+  a.t+=dt;a.pop=Math.max(0,a.pop-dt*3);a.flash-=dt;a.atkT-=dt*(S.cheerT>0?1.5:1);a.lunge=Math.max(0,a.lunge-dt);
   if(a.stun>0){a.stun-=dt;return}
   a.sk-=dt;
   let tx=a.post;
@@ -679,6 +715,8 @@ function update(dt){
   S.gt+=dt;S.t+=dt;
   S.cd-=dt;S.comboT-=dt;if(S.comboT<=0)S.combo=0;
   if(flashDew>0)flashDew-=dt;
+  if(S.cheerT>0)S.cheerT-=dt;
+  for(const k in S.skCd)if(S.skCd[k]>0)S.skCd[k]-=dt;
   Object.keys(S.sumCd).forEach(k=>{if(S.sumCd[k]>0)S.sumCd[k]-=dt});
   S.dew=Math.min(S.dewCap,S.dew+S.income*dt);
   if(facL('fountain'))S.pond.hp=Math.min(S.pond.max,S.pond.hp+.8*facL('fountain')*dt);
@@ -736,9 +774,8 @@ function tongueCards(){
   if(S.rangeMul<1.9)L.push({cat:'혀 강화',col:C_T,n:'긴 혀',d:'사거리 +25%',ap:()=>{S.rangeMul*=1.25}});
   if(S.dmgLvl<6)L.push({cat:'혀 강화',col:C_T,n:'힘센 혀',d:'혀 피해 +25%',ap:()=>{S.dmgLvl++}});
   if(S.cdMul>.55)L.push({cat:'혀 강화',col:C_T,n:'날쌘 혀',d:'타격 쿨다운 -15%',ap:()=>{S.cdMul*=.85}});
-  if(!S.pierce)L.push({cat:'혀 강화',col:C_T,n:'관통 혀',d:'혀가 지나가는 길의 적도 50% 피해',ap:()=>{S.pierce=true}});
-  if(S.chain<6)L.push({cat:'혀 강화',col:C_T,n:'연쇄 혀',d:'맞은 적 주변 2마리에게 45% 피해가 튀어요',ap:()=>{S.chain+=2}});
-  Object.entries(ELEMS).forEach(([k,v])=>{if(!S.elem[k])L.push({cat:'속성 부여',col:v.col,n:v.n+' 혀',d:{fire:'맞은 적이 4초간 불타요 (재생 차단)',water:'적이 젖어 느려져요. 번개와 시너지!',volt:'번개가 튀어요(2마리). 젖은 적이면 더 강하게!',poison:'독이 중첩돼요 (최대 5중)',ice:'적이 느려지고, 3번 맞으면 얼어붙어요'}[k],ap:()=>{S.elem[k]=true}})});
+  if(S.waveMul<1.9)L.push({cat:'혀 강화',col:C_T,n:'큰 충격파',d:'혀 충격파가 더 커지고 더 멀리 나가요 (+25%)',ap:()=>{S.waveMul*=1.25}});
+  if(!S.twin)L.push({cat:'혀 강화',col:C_T,n:'쌍둥이 충격파',d:'탭할 때마다 충격파가 위아래로 한 발씩 더 나가요',w:1.3,ap:()=>{S.twin=true}});
   return L;
 }
 function compCards(){
@@ -748,6 +785,9 @@ function compCards(){
     if(!S.owned[r])L.push({cat:'동료 영입',col:R.col,n:R.n+' ('+R.role+')',d:R.desc+' · 소환 카드가 열려요',w:2.5,ap:()=>{S.owned[r]=1}});
     else if(S.owned[r]<3)L.push({cat:'동료 강화',col:R.col,n:R.s+' Lv'+(S.owned[r]+1),d:'체력·피해 +40%, 스킬 「'+R.skill+'」 강화. 새로 소환하는 개체부터 적용',w:1.3,ap:()=>{S.owned[r]++}});
   });
+  if(S.hero.storm<4)L.push({cat:'영웅 스킬',col:'#facc15',n:'연잎 폭풍 Lv'+(S.hero.storm+1),d:'화면 안 모든 적에게 큰 피해 + 잠깐 기절 (피해 +40%)',w:1.4,ap:()=>{S.hero.storm++}});
+  if(!S.hero.cheer)L.push({cat:'영웅 스킬',col:'#facc15',n:'개굴 함성 습득',d:'8초간 동료 공격 +30%·속도 UP, 체력 30% 회복',w:2.2,ap:()=>{S.hero.cheer=1}});
+  else if(S.hero.cheer<4)L.push({cat:'영웅 스킬',col:'#facc15',n:'개굴 함성 Lv'+(S.hero.cheer+1),d:'효과 시간·회복량 증가',w:1.2,ap:()=>{S.hero.cheer++}});
   L.push({cat:'부대 확대',col:C_U,n:'소환 한도 +1',d:'전열·원거리 동시 소환 한도 +1',w:.9,ap:()=>{S.cap.front++;S.cap.range++}});
   L.push({cat:'이슬 흐름',col:C_U,n:'이슬 수입 +20%',d:'💧이 더 빨리 차올라요 (최대치 +20)',w:.9,ap:()=>{S.income*=1.2;S.dewCap+=20}});
   return L;
@@ -846,8 +886,7 @@ function buildRun(){
     diff:DIFFS[opt.diff].n,dev:navigator.userAgent.slice(0,120)+' | '+innerWidth+'x'+innerHeight+' dpr'+(window.devicePixelRatio||1)+' '+(layout.portrait?'세로':'가로')};
 }
 function buildDesc(){
-  const el=Object.keys(S.elem).map(k=>ELEMS[k].n).join('/')||'-';
-  return '동료['+ROLE_KEYS.filter(r=>S.owned[r]).map(r=>ROLES[r].s+'Lv'+S.owned[r]).join(',')+'] 소환한도[전'+S.cap.front+' 원'+S.cap.range+'] 이슬수입'+S.income.toFixed(1)+'/s 혀[반경x'+S.radMul.toFixed(2)+' 사거리x'+S.rangeMul.toFixed(2)+' 피해Lv'+S.dmgLvl+' 쿨x'+S.cdMul.toFixed(2)+(S.pierce?' 관통':'')+(S.chain?' 연쇄'+S.chain:'')+' 속성:'+el+'] 시설['+FAC.map(f=>f.n+':'+facL(f.id)).join(',')+'] 유물['+(S.relics.map(id=>RELICS.find(r=>r.id===id).n).join(',')||'-')+']';
+  return '동료['+ROLE_KEYS.filter(r=>S.owned[r]).map(r=>ROLES[r].s+'Lv'+S.owned[r]).join(',')+'] 소환한도[전'+S.cap.front+' 원'+S.cap.range+'] 이슬수입'+S.income.toFixed(1)+'/s 혀[반경x'+S.radMul.toFixed(2)+' 사거리x'+S.rangeMul.toFixed(2)+' 피해Lv'+S.dmgLvl+' 쿨x'+S.cdMul.toFixed(2)+' 충격파x'+S.waveMul.toFixed(2)+(S.twin?' 쌍둥이':'')+'] 영웅[폭풍Lv'+S.hero.storm+' 함성Lv'+S.hero.cheer+'] 지갑Lv'+S.wallet+' 시설['+FAC.map(f=>f.n+':'+facL(f.id)).join(',')+'] 유물['+(S.relics.map(id=>RELICS.find(r=>r.id===id).n).join(',')||'-')+']';
 }
 const mmss=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function runText(r,idx){
@@ -951,6 +990,7 @@ addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')input.kl=true;
   else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')input.kr=true;
   else if(e.key>='1'&&e.key<='4')summon(ROLE_KEYS[+e.key-1]);
+  else if(e.key==='5')heroSkill('storm');else if(e.key==='6')heroSkill('cheer');else if(e.key==='7')upWallet();
   else if(e.key==='Escape'&&(scene==='battle'))doPause(true);
 });
 addEventListener('keyup',e=>{
@@ -960,15 +1000,17 @@ addEventListener('keyup',e=>{
 
 /* ================= 덱 UI ================= */
 let deckEls={};
+function mkCard(cls,col,ico,name,small,onTap){
+  const b=document.createElement('button');b.className='dk '+cls;b.style.setProperty('--c',col);
+  b.innerHTML='<span class="ico">'+ico+'</span><b>'+name+'</b><small>'+small+'</small><em></em><div class="cdv"></div>';
+  b.addEventListener('pointerdown',e=>{e.preventDefault();onTap()});
+  return {b,em:b.querySelector('em'),cd:b.querySelector('.cdv'),sm:b.querySelector('small'),nm:b.querySelector('b')};
+}
 function buildDeck(){
   const d=$('deck');d.innerHTML='';deckEls={};
-  ROLE_KEYS.forEach((r,i)=>{
-    const R=ROLES[r];
-    const b=document.createElement('button');b.className='dk';b.style.setProperty('--c',R.col);
-    b.innerHTML='<span class="ico">'+R.ico+'</span><b>'+R.s+'</b><small>💧'+R.cost+'</small><em></em><div class="cdv"></div>';
-    b.addEventListener('pointerdown',e=>{e.preventDefault();summon(r)});
-    d.appendChild(b);deckEls[r]={b,em:b.querySelector('em'),cd:b.querySelector('.cdv'),sm:b.querySelector('small')};
-  });
+  ROLE_KEYS.forEach(r=>{const R=ROLES[r];const e=mkCard('u',R.col,R.ico,R.s,'💧'+R.cost,()=>summon(r));d.appendChild(e.b);deckEls[r]=e});
+  Object.keys(HSK).forEach(k=>{const H=HSK[k];const e=mkCard('h',H.col,H.ico,H.n,'💧'+H.cost,()=>heroSkill(k));d.appendChild(e.b);deckEls['h_'+k]=e});
+  const w=mkCard('h','#7dd3fc','💰','이슬 주머니','',upWallet);d.appendChild(w.b);deckEls.wallet=w;
 }
 function refreshPanel(){
   if(scene!=='battle'||!S)return;
@@ -984,6 +1026,11 @@ function refreshPanel(){
     const cdp=owned&&S.sumCd[r]>0?Math.min(100,S.sumCd[r]/R.sumCd*100):0;
     e.cd.style.height=cdp+'%';
   });
+  Object.keys(HSK).forEach(k=>{const e=deckEls['h_'+k];if(!e)return;const H=HSK[k],lv=S.hero[k];
+    e.b.classList.toggle('lock',!lv);e.b.classList.toggle('off',!!lv&&(S.dew<H.cost||S.skCd[k]>0));
+    e.em.textContent=lv?('Lv'+lv+(S.skCd[k]>0?' · '+Math.ceil(S.skCd[k])+'s':'')):'🔒 카드로 습득';
+    e.cd.style.height=lv&&S.skCd[k]>0?Math.min(100,S.skCd[k]/H.cd*100)+'%':'0'});
+  {const e=deckEls.wallet;if(e){const mx=S.wallet>=5;e.sm.textContent=mx?'MAX':'💧'+walletCost();e.em.textContent='Lv'+S.wallet+' · 수입 '+S.income.toFixed(1)+'/s';e.b.classList.toggle('off',mx||S.dew<walletCost())}}
   $('tip').textContent=S.wi===0&&S.t<30?'카드를 눌러 동료 소환! 전장을 탭하면 혀 타격':'';
   if(layout.portrait){
     const ens=enemies.length+S.queue.length;
@@ -1291,7 +1338,7 @@ $('bCopyNow').onclick=()=>{const tmp=buildRun();tmp.res='progress';copyText(allL
 $('bQuit').onclick=()=>{paused=false;endRun('quit')};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&scene==='battle')doPause(true)});
 setOptLabels();updCopyLabel();resize();requestAnimationFrame(frame);
-window.__g={get S(){return S},get scene(){return scene},get enemies(){return enemies},get allies(){return allies},get P(){return P},summon,strike,update,startRun,startWave,openInter,waveCleared,ROLES,WAVES,layout,get cam(){return camX},input,hitR,tRange};
+window.__g={heroSkill,upWallet,get S(){return S},get scene(){return scene},get enemies(){return enemies},get allies(){return allies},get P(){return P},summon,strike,update,startRun,startWave,openInter,waveCleared,ROLES,WAVES,layout,get cam(){return camX},input,hitR,tRange};
 </script>
 </body>
 </html>
