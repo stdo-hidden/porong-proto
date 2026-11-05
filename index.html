@@ -3305,6 +3305,15 @@ function renderRunReport(cleared) {
     이번 판 포기율 ${rate}% · 누적(최근 ${runs.length}판) 포기율 ${tSeen ? Math.round(tAb / tSeen * 100) : 0}%<br>
     독 ${S.poisons} · 변이 ${S.mutants} · 되뱉기 ${S.spits} · 먹이 교체 ${S.rerolls}<br>
     <h4>변신 타임라인</h4><div class="tl">${S.timeline.map(t => `${String(Math.floor(t.t / 60)).padStart(2, '0')}:${String(t.t % 60).padStart(2, '0')} → ${t.name}`).join('<br>') || '변신 없음'}</div>`;
+  // 재미 체크리스트 자가 평가 (1~5점): 선택한 항목만
+  const QS = [['ctl', '조작이 손에 착 붙는다'], ['choice', '먹을까 포기할까 고민과 후회의 맛이 있다'], ['grow', '성장(변신·화력)이 눈에 보이고 짜릿하다'], ['curve', '난이도 곡선이 적당하다'], ['again', '죽은 직후 한 판 더 하고 싶다']];
+  rec.rating = {};
+  document.getElementById('go-stats').insertAdjacentHTML('beforeend', '<h4>재미 체크 (1~5점, 눌러서 기록)</h4>' + QS.map(([k, t]) => `<div style="margin:4px 0">${t}<br>` + [1, 2, 3, 4, 5].map(n => `<button class="btn-sub rate-btn" data-k="${k}" data-n="${n}" style="padding:4px 12px;margin-right:4px">${n}</button>`).join('') + '</div>').join(''));
+  document.querySelectorAll('.rate-btn').forEach(b => b.onclick = () => {
+    rec.rating[b.dataset.k] = +b.dataset.n;
+    document.querySelectorAll(`.rate-btn[data-k="${b.dataset.k}"]`).forEach(x => { x.style.background = x === b ? '#22c55e' : ''; });
+    runs[runs.length - 1] = rec; try { localStorage.setItem('porong_form_runs', JSON.stringify(runs)); } catch (e) {}
+  });
   document.getElementById('go-copy').onclick = () => {
     const txt = JSON.stringify(runs, null, 1);
     (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => alert('검증 로그(최근 20판)를 복사했습니다.'), () => prompt('복사해서 전달해 주세요', txt));
