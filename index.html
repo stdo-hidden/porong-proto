@@ -687,7 +687,7 @@ const P = {
 
 let enemies = [], projs = [], enemyProjs = [], groundHazards = [], lightningFX = [], debuffParticles = [], hitSparks = [], drops = [], chests = [], floatTexts = [];
 const keys = {};
-const mouse = { isDown: false, x: 0, y: 0 };
+const mouse = { isDown: false, x: 0, y: 0, sx: 0, sy: 0 }; // sx,sy: 터치 시작점 = 가상패드 중심 (플로팅 조이스틱)
 
 let pondProps = [];
 function initBackgroundProps() {
@@ -719,7 +719,7 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 window.addEventListener('mousedown', e => {
   if (!e.target.closest('.modal-bg') && !e.target.closest('.icon-btn') && !e.target.closest('.slot-box') && !e.target.closest('.title-screen')) {
-    mouse.isDown = true; mouse.x = e.clientX; mouse.y = e.clientY;
+    mouse.isDown = true; mouse.x = mouse.sx = e.clientX; mouse.y = mouse.sy = e.clientY;
   }
 });
 window.addEventListener('contextmenu', e => e.preventDefault());
@@ -728,7 +728,7 @@ window.addEventListener('mouseup', () => mouse.isDown = false);
 
 window.addEventListener('touchstart', e => {
   if (!e.target.closest('.modal-bg') && !e.target.closest('.icon-btn') && !e.target.closest('.slot-box') && !e.target.closest('.title-screen')) {
-    mouse.isDown = true; mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY;
+    mouse.isDown = true; mouse.x = mouse.sx = e.touches[0].clientX; mouse.y = mouse.sy = e.touches[0].clientY;
   }
 }, { passive: false });
 window.addEventListener('touchmove', e => {
@@ -1259,9 +1259,9 @@ function update() {
   if (keys['a'] || keys['arrowleft']) vx -= 1;
   if (keys['d'] || keys['arrowright']) vx += 1;
   if (mouse.isDown) {
-    const mdx = mouse.x - W / 2, mdy = mouse.y - H / 2;
+    const mdx = mouse.x - mouse.sx, mdy = mouse.y - mouse.sy;
     const dist = Math.hypot(mdx, mdy);
-    if (dist > 20) { vx = mdx / dist; vy = mdy / dist; }
+    if (dist > 10) { const mag = Math.min(1, dist / 45); vx = mdx / dist * mag; vy = mdy / dist * mag; }
   }
   const len = Math.hypot(vx, vy);
   if (len > 0) {
@@ -2035,8 +2035,27 @@ function draw() {
   }
 
   ctx.restore();
-  requestAnimationFrame(() => { update(); draw(); });
+
+  // 가상패드: 터치 시작 위치에 나타나는 플로팅 조이스틱
+  if (mouse.isDown && isRun) {
+    const dx = mouse.x - mouse.sx, dy = mouse.y - mouse.sy, d = Math.hypot(dx, dy), k = d > 50 ? 50 / d : 1;
+    ctx.save(); ctx.globalAlpha = 0.45; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.arc(mouse.sx, mouse.sy, 50, 0, 6.28); ctx.fill(); ctx.stroke();
+    ctx.globalAlpha = 0.8; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(mouse.sx + dx * k, mouse.sy + dy * k, 20, 0, 6.28); ctx.fill();
+    ctx.restore();
+  }
+
+  // 고정 60Hz 타임스텝: 90/120Hz 기기에서 게임이 빨라지는 문제 방지
+  requestAnimationFrame(now => {
+    if (!lastFrameT) lastFrameT = now;
+    stepAcc += Math.min(100, now - lastFrameT); lastFrameT = now;
+    let steps = 0;
+    while (stepAcc >= 1000 / 60 - 0.5 && steps < 3) { update(); stepAcc -= 1000 / 60; steps++; }
+    if (steps === 3) stepAcc = 0;
+    draw();
+  });
 }
+let lastFrameT = 0, stepAcc = 0;
 
 /* ==========================================================================
    10. 보스 출현 & 보스 보상 모달
